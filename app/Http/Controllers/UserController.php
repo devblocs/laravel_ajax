@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Validator;
 use App\UserDetail;
 use Illuminate\Http\Request;
 
@@ -19,20 +20,34 @@ class UserController extends Controller
 
         $filename="";
         $skills = "";
-        if( $req->hasFile('profile_pic')) {
-            $image = $req->file('profile_pic');
-            $path = public_path(). '/images/';
-            $filename = time().rand().'.' . $image->getClientOriginalExtension();
-            $image->move($path, $filename);
-        }
+        
+        $rules = [
+            'bio' => 'required',
+            'about' => 'required|max:100'
+        ];
 
-        if($req->has('skills')){
-            $skills = implode(',', $req->skills);
-        }
+        $validator = Validator::make($req->all(), $rules);
 
-        if($req->has('job_type')){
-            $job_type = implode(',', $req->job_type);
-        }
+        if($validator->fails()){
+            return response()->json([
+                'errors' => $validator->getMessageBag()>toArray()
+            ]);
+        }else{
+         
+            if( $req->hasFile('profile_pic')) {
+                $image = $req->file('profile_pic');
+                $path = public_path(). '/images/';
+                $filename = time().rand().'.' . $image->getClientOriginalExtension();
+                $image->move($path, $filename);
+            }
+
+            if($req->has('skills')){
+                $skills = implode(',', $req->skills);
+            }
+
+            if($req->has('job_type')){
+                $job_type = implode(',', $req->job_type);
+            }
 
             $ud = ['bio' => $req->bio, 'gender' => $req->gender, 'about' => $req->about, 'profile_pic' => $filename, 'skills' => $skills, 'job_type' => $job_type];
 
@@ -46,5 +61,6 @@ class UserController extends Controller
             }
 
             return response()->json(['status' => false]); 
+        }
     }
 }
